@@ -26,6 +26,14 @@ module.exports = async function run(sites = [], options = {}, decorators = {}) {
 async function task({ page, data })  {
 	const { url: baseUrl, decorators } = data;
 
+	if (decorators.skip) {
+		const skip = await decorators.skip.call(decorators, page, baseUrl);
+		
+		if (skip === true) {
+			return Promise.resolve([]);
+		}
+	}
+
 	if (decorators.before) {
 		await decorators.before.call(decorators, page, baseUrl);
 	}
