@@ -3,7 +3,7 @@ const { forEach } = require('p-iteration');
 
 const Links = require('./links');
 
-module.exports = async function run(sites = [], options = {}) {
+module.exports = async function run(sites = [], options = {}, postHandler) {
 	if (!options.concurrency) {
 		options.concurrency = Cluster.CONCURRENCY_CONTEXT;
 	}
@@ -14,7 +14,7 @@ module.exports = async function run(sites = [], options = {}) {
 	await cluster.task(task);
 
 	await forEach(sites, async (site) => {
-		siteMap[site] = await cluster.execute(site);
+		siteMap[site] = await cluster.execute({ url: site, postHandler });
 	});
 
 	await cluster.idle();
@@ -23,7 +23,9 @@ module.exports = async function run(sites = [], options = {}) {
 	return siteMap;
 };
 
-async function task({ page, data: baseUrl })  {
+async function task({ page, data })  {
+	const { url: baseUrl, postHandler } = data;
+
 	const links = new Links(baseUrl);
 
 	links.register(baseUrl);
@@ -37,6 +39,10 @@ async function task({ page, data: baseUrl })  {
 
 		try {
 			await findAllLinks(page, nextUrl, links);
+
+			if (postHandler) {
+				await postHandler(page, nextUrl, baseUrl);
+			}
 		} catch(error) {
 			console.error(error);
 		}
