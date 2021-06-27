@@ -29,7 +29,7 @@ module.exports = class Links {
 
 	collect(urls) {
 		urls.forEach(url => {
-			if (!url || this.map[url]) {
+			if (this.map[url]) {
 				return;
 			}
 
@@ -53,11 +53,5 @@ module.exports = class Links {
 
 	isInternal(url) {
 		return url.indexOf(this.baseUrl) === 0;
-	}
-
-	addPrefixIfNeed(url) {
-		const newUrl = new URL(url, this.baseUrl);
-
-		return newUrl ? newUrl.href : null;
 	}
 };
