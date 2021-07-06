@@ -68,7 +68,7 @@ async function task({ page, data })  {
 			await findAllLinks(page, nextUrl, storage);
 
 			if (decorators.afterEach) {
-				await decorators.afterEach.call(decorators, page, nextUrl, baseUrl);
+				await decorators.afterEach.call(decorators, page, nextUrl, baseUrl, storage.getInternalLinks());
 			}
 		} catch(error) {
 			console.error(error);
