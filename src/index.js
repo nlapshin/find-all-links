@@ -50,6 +50,16 @@ async function task({ page, data })  {
 		}
 
 		try {
+			if (decorators.skipBeforeEach) {
+				const skip = await decorators.skipBeforeEach.call(decorators, page, baseUrl);
+				
+				if (skip === true) {
+					links.setChecked(nextUrl);
+
+					return Promise.resolve([]);
+				}
+			}
+
 			if (decorators.beforeEach) {
 				await decorators.beforeEach.call(decorators, page, nextUrl, baseUrl);
 			}
