@@ -30,11 +30,6 @@
     "mocha": "^8.1.3"
   },
   "dependencies": {
-    "async-task-queue-runner": "git+https://github.com/nlapshin/task-queue-runner-js.git#dev",
-    "cheerio": "^1.0.0-rc.10",
-    "delay": "^5.0.0",
-    "got": "^11.8.2",
-    "hpagent": "^0.1.1",
     "p-iteration": "^1.1.8",
     "puppeteer": "^10.0.0",
     "puppeteer-cluster": "^0.22.0"
