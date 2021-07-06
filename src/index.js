@@ -3,6 +3,8 @@ const { forEach } = require('p-iteration');
 
 const Links = require('./links');
 
+let errorCount = 0;
+
 module.exports = async function run(sites = [], options = {}, decorators = {}) {
 	if (!options.concurrency) {
 		options.concurrency = Cluster.CONCURRENCY_CONTEXT;
@@ -56,7 +58,7 @@ async function task({ page, data })  {
 				if (skip === true) {
 					links.setChecked(nextUrl);
 
-					return Promise.resolve([]);
+					continue;
 				}
 			}
 
@@ -71,6 +73,12 @@ async function task({ page, data })  {
 			}
 		} catch(error) {
 			console.error(error);
+
+			if (errorCount >= 10) {
+				throw error;
+			}
+
+			errorCount++;
 		}
 
 		const checkedCount = links.getCheckedLinks().length;
