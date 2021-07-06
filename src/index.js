@@ -51,7 +51,7 @@ async function task({ page, data })  {
 
 		try {
 			if (decorators.skipBeforeEach) {
-				const skip = await decorators.skipBeforeEach.call(decorators, page, baseUrl);
+				const skip = await decorators.skipBeforeEach.call(decorators, page, nextUrl, baseUrl);
 				
 				if (skip === true) {
 					links.setChecked(nextUrl);
@@ -67,7 +67,7 @@ async function task({ page, data })  {
 			await findAllLinks(page, nextUrl, links);
 
 			if (decorators.afterEach) {
-				await decorators.afterEach.call(decorators, page, nextUrl, baseUrl);
+				await decorators.afterEach.call(decorators, page, nextUrl, baseUrl, links.getInternalLinks());
 			}
 		} catch(error) {
 			console.error(error);
