@@ -14,7 +14,10 @@ const findAllLinks = require('./');
 		timeout: 180 * 1000,
 		retryLimit: 10,
 		retryDelay: 30 * 1000,
-		monitor: true
+		monitor: true,
+		storage: {
+			fileStore: true
+		}
 	};
 
 	await findAllLinks(sites, options);

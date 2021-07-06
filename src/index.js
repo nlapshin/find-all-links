@@ -1,7 +1,7 @@
 const { Cluster } = require('puppeteer-cluster');
 const { forEach } = require('p-iteration');
 
-const Links = require('./links');
+const Storage = require('./storage');
 
 let errorCount = 0;
 
@@ -16,7 +16,7 @@ module.exports = async function run(sites = [], options = {}, decorators = {}) {
 	await cluster.task(task);
 
 	await forEach(sites, async (site) => {
-		siteMap[site] = await cluster.execute({ url: site, decorators });
+		siteMap[site] = await cluster.execute({ url: site, decorators, storage: options.storage });
 	});
 
 	await cluster.idle();
@@ -26,7 +26,8 @@ module.exports = async function run(sites = [], options = {}, decorators = {}) {
 };
 
 async function task({ page, data })  {
-	const { url: baseUrl, decorators } = data;
+	const { url: baseUrl, decorators, storage: storageOptions = {} } = data;
+	const storage = new Storage(baseUrl, storageOptions);
 
 	if (decorators.skip) {
 		const skip = await decorators.skip.call(decorators, page, baseUrl);
@@ -40,12 +41,10 @@ async function task({ page, data })  {
 		await decorators.before.call(decorators, page, baseUrl);
 	}
 
-	const links = new Links(baseUrl);
-
-	links.register(baseUrl);
+	storage.register(baseUrl);
 
 	for (;;) {
-		const nextUrl = links.getFirstUncheckedUrl();
+		const nextUrl = storage.getFirstUncheckedUrl();
 
 		if (nextUrl === null) {
 			break;
@@ -56,7 +55,7 @@ async function task({ page, data })  {
 				const skip = await decorators.skipBeforeEach.call(decorators, page, nextUrl, baseUrl);
 				
 				if (skip === true) {
-					links.setChecked(nextUrl);
+					storage.setChecked(nextUrl);
 
 					continue;
 				}
@@ -66,10 +65,10 @@ async function task({ page, data })  {
 				await decorators.beforeEach.call(decorators, page, nextUrl, baseUrl);
 			}
 
-			await findAllLinks(page, nextUrl, links);
+			await findAllLinks(page, nextUrl, storage);
 
 			if (decorators.afterEach) {
-				await decorators.afterEach.call(decorators, page, nextUrl, baseUrl, links.getInternalLinks());
+				await decorators.afterEach.call(decorators, page, nextUrl, baseUrl);
 			}
 		} catch(error) {
 			console.error(error);
@@ -81,17 +80,18 @@ async function task({ page, data })  {
 			errorCount++;
 		}
 
-		const checkedCount = links.getCheckedLinks().length;
-		const allCount = links.getInternalLinks().length;
-
-		console.log(`${baseUrl}: ${checkedCount}/${allCount}`);
+		logCount(baseUrl, storage);
 	}
 
 	if (decorators.after) {
 		await decorators.after.call(decorators, page, baseUrl);
 	}
 
-	return links.getInternalLinks();
+	if (this.options.fileStore) {
+		storage.cleanFile();
+	}
+
+	return storage.getInternalLinks();
 }
 
 async function findAllLinks(page, url, links) {
@@ -101,4 +101,11 @@ async function findAllLinks(page, url, links) {
 
 	links.setChecked(url);
 	links.collect(hrefs);
+}
+
+function logCount(baseUrl, storage) {
+	const checkedCount = storage.getCheckedLinks().length;
+	const allCount = storage.getInternalLinks().length;
+
+	console.log(`${baseUrl}: ${checkedCount}/${allCount}`);
 }
