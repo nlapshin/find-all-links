@@ -87,7 +87,7 @@ async function task({ page, data })  {
 		await decorators.after.call(decorators, page, baseUrl);
 	}
 
-	if (this.options.fileStore) {
+	if (storageOptions.fileStore) {
 		storage.cleanFile();
 	}
 
